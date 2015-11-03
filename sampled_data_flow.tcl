@@ -30,17 +30,12 @@ puts "###1### srate=$srate"
 
 ### The second argument is a maximum records count (1000 by default; negative is infinity)
 set maxreccount [lindex $argv 1]
-if { [ string is integer $maxreccount ] } {
-    if { $maxreccount == 0 } {
-	# Default 1000
-	set maxreccount 1000
-    }
-} else {
-    # Default 1000
-    set maxreccount 1000
+if { ! [ string is integer $maxreccount ] || $maxreccount == "" } {
+    set maxreccount 10000
 }
 
 puts "###2### maxreccount=$maxreccount"
+
 
 set reccount 0
 set maxstep 0
@@ -48,7 +43,9 @@ set maxsteps {}
 set sflowprev {}
 set starttime {}
 
+# For all input lines
 while {[gets stdin line] >= 0} {
+    # Split each line into fields by spaces
     set fields [regexp -all -inline {\S+} $line]
     set sdate [lindex $fields 0]
     set stime [lindex $fields 1]
@@ -65,7 +62,6 @@ while {[gets stdin line] >= 0} {
 	set durat [string range $durat 0 $n]
     }
 
-    
     if { [catch {set sflow [clock scan $datetime]}] } {
 	# Error - not a date-time format, let's skip
 	continue

@@ -20,7 +20,8 @@ if { $targetip == "" } {
 
 puts "###1### targetip=$targetip"
 
-### The second argument is a maximum records count (1000 by default; negative is infinity)
+### The second argument is a maximum records count to investigate
+### (1000 by default; negative is infinity)
 set maxreccount [lindex $argv 1]
 if { ! [ string is integer $maxreccount ] || $maxreccount == "" } {
     # Default 1000
@@ -86,8 +87,10 @@ while {[gets stdin line] >= 0} {
     }
 }
 
+# Display results
+puts "Port BytePassed"
 foreach {p b} [array get targetports] {
-    puts "$p:  $b"
+    puts [format "%4d:  %8d" $p $b]
 }
 
 # End of file

@@ -11,8 +11,16 @@
 # Fields:
 # 0          1                2     3              4             5    6                           7      8       9
 
+### The first argument is a maximum records count to investigate
+### (10000 by default; negative is infinity)
+set maxreccount [lindex $argv 0]
+if { ! [ string is integer $maxreccount ] || $maxreccount == "" } {
+    # Default
+    set maxreccount 10000
+}
+
+puts "###2### maxreccount=$maxreccount"
 set reccount 0
-set maxreccount 1000000
 
 set maxstep 0
 set maxsteps {}
@@ -75,7 +83,7 @@ while {[gets stdin line] >= 0} {
     }
 
     incr reccount
-    if { $reccount >= $maxreccount } {
+    if { $reccount >= $maxreccount && $maxreccount >= 0 } {
 	puts "start:  $startdatetime"
 	puts "finish: $datetime"
 	puts "number of records = $maxreccount"
