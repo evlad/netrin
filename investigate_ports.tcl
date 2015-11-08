@@ -41,7 +41,8 @@ set maxsteps {}
 set sflowprev {}
 set starttime {}
 
-array set targetports {}
+array set sports {}
+array set dports {}
 
 while {[gets stdin line] >= 0} {
     set fields [regexp -all -inline {\S+} $line]
