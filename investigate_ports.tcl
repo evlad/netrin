@@ -50,7 +50,6 @@ while {[gets stdin line] >= 0} {
 
     set sdate [lindex $fields 0]
     set stime [lindex $fields 1]
-    set stime [lindex $fields 1]
     if {[string first . $stime] != -1} {
 	# Strip subseconds
 	set n [expr [string first . $stime] - 1]
@@ -83,12 +82,12 @@ while {[gets stdin line] >= 0} {
     if { $targetip != "" } {
 	if { $sip == $targetip } {
 	    if { $sport < 1024 } {
-		incr targetports($sport) $bytespassed
+		incr sports($sport) $bytespassed
 	    }
 	}
 	if { $dip == $targetip } {
 	    if { $dport < 1024 } {
-		incr targetports($dport) $bytespassed
+		incr dports($dport) $bytespassed
 	    }
 	}
     } elseif { $targetnetc != "" } {
