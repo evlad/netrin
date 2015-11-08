@@ -82,39 +82,35 @@ while {[gets stdin line] >= 0} {
     if { $targetip != "" } {
 	if { $sip == $targetip } {
 	    if { $sport < 1024 } {
-		if {[info exists sports($sport)]} {
-		    incr sports($sport) $bytespassed
-		} else {
-		    set sports($sport) $bytespassed
+		if {![info exists sports($sport)]} {
+		    set sports($sport) 0.0
 		}
+		set sports($sport) [expr $sports($sport) + $bytespassed]
 	    }
 	}
 	if { $dip == $targetip } {
 	    if { $dport < 1024 } {
-		if {[info exists dports($dport)]} {
-		    incr dports($dport) $bytespassed
-		} else {
-		    set dports($dport) $bytespassed
+		if {![info exists dports($dport)]} {
+		    set dports($dport) 0.0
 		}
+		set dports($dport) [expr $dports($dport) + $bytespassed]
 	    }
 	}
     } elseif { $targetnetc != "" } {
 	if { [string match $targetnetc* $sip ] } {
 	    if { $sport < 1024 } {
-		if {[info exists sports($sport)]} {
-		    incr sports($sport) $bytespassed
-		} else {
-		    set sports($sport) $bytespassed
+		if {![info exists sports($sport)]} {
+		    set sports($sport) 0.0
 		}
+		set sports($sport) [expr $sports($sport) + $bytespassed]
 	    }
 	}
 	if { [string match $targetnetc* $dip ] } {
 	    if { $dport < 1024 } {
-		if {[info exists dports($dport)]} {
-		    incr dports($dport) $bytespassed
-		} else {
-		    set dports($dport) $bytespassed
+		if {![info exists dports($dport)]} {
+		    set dports($dport) 0.0
 		}
+		set dports($dport) [expr $dports($dport) + $bytespassed]
 	    }
 	}
     }
@@ -163,18 +159,18 @@ foreach {p b} [array get dports] {
 
 # Display results and sort them by popularity
 puts "###3### SrcPort BytePassed"
-#foreach r [lsort -increasing -integer -index 0 $srecords] {
-foreach r [lsort -decreasing -integer -index 1 $srecords] {
+#foreach r [lsort -increasing -real -index 0 $srecords] {
+foreach r [lsort -decreasing -real -index 1 $srecords] {
     set p [lindex $r 0]
     set b [lindex $r 1]
-    puts [format "%4d %10d" $p $b]
+    puts [format "%4d %12g" $p $b]
 }
 puts "###4### DstPort BytePassed"
-#foreach r [lsort -increasing -integer -index 0 $drecords] {
-foreach r [lsort -decreasing -integer -index 1 $drecords] {
+#foreach r [lsort -increasing -real -index 0 $drecords] {
+foreach r [lsort -decreasing -real -index 1 $drecords] {
     set p [lindex $r 0]
     set b [lindex $r 1]
-    puts [format "%4d %10d" $p $b]
+    puts [format "%4d %12g" $p $b]
 }
 
 # End of file
