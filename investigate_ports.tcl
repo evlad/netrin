@@ -12,13 +12,18 @@
 # 0          1                2     3              4             5    6                           7      8       9
 
 ### The first argument is target IP
+set targetnetc [regexp -inline {^\d+\.\d+\.\d+\.$} [lindex $argv 0] ]
 set targetip [regexp -inline {^\d+\.\d+\.\d+\.\d+$} [lindex $argv 0] ]
-if { $targetip == "" } {
-    error "Need to define target IP"
+if { $targetip == "" && $targetnetc == "" } {
+    error "Need to define target IP or target network mask (class C)"
     exit 1
 }
 
-puts "###1### targetip=$targetip"
+if { $targetip != ""} {
+    puts "###1### targetip=$targetip"
+} elseif {$targetnetc != ""} {
+    puts "###1### targetnetc=$targetnetc"
+}
 
 ### The second argument is a maximum records count to investigate
 ### (1000 by default; negative is infinity)
@@ -64,14 +69,37 @@ while {[gets stdin line] >= 0} {
 
     # Match source or destination port with target IP and count
     # transferred bytes
-    if { $sip == $targetip } {
-	if { $sport < 1024 } {
-	    incr targetports($sport) [lindex $fields 8]
-	}
+    set bytespassed [lindex $fields 8]
+    set multiplier [lindex $fields 9]
+    if { $multiplier == "M" } {
+	set bytespassed [expr int($bytespassed * 1024 * 1024)]
     }
-    if { $dip == $targetip } {
-	if { $dport < 1024 } {
-	    incr targetports($dport) [lindex $fields 8]
+    #if { ! [string is integer $bytespassed] } {
+    #	puts "Wrong bytes; record $line"
+    #	continue
+    #}
+
+    if { $targetip != "" } {
+	if { $sip == $targetip } {
+	    if { $sport < 1024 } {
+		incr targetports($sport) $bytespassed
+	    }
+	}
+	if { $dip == $targetip } {
+	    if { $dport < 1024 } {
+		incr targetports($dport) $bytespassed
+	    }
+	}
+    } elseif { $targetnetc != "" } {
+	if { [string match $targetnetc* $sip ] } {
+	    if { $sport < 1024 } {
+		incr sports($sport) $bytespassed
+	    }
+	}
+	if { [string match $targetnetc* $dip ] } {
+	    if { $dport < 1024 } {
+		incr dports($dport) $bytespassed
+	    }
 	}
     }
 
@@ -87,10 +115,50 @@ while {[gets stdin line] >= 0} {
     }
 }
 
-# Display results
-puts "Port BytePassed"
-foreach {p b} [array get targetports] {
-    puts [format "%4d:  %8d" $p $b]
+# By port number
+proc PortCompare {a b} {
+    set aport [lindex $a 0]
+    set bport [lindex $b 0]
+    if { $aport == "" || $bport == "" } {
+	return 0
+    }
+    return [expr $aport - $bport]
+}
+
+# By popularity
+proc BytePassedCompare {a b} {
+    set abytes [lindex $a 1]
+    set bbytes [lindex $b 1]
+    if { $abytes == "" || $bbytes == "" } {
+	return 0
+    }
+    return [expr $abytes - $bbytes]
+}
+
+# Transform arrays into lists
+set srecords {}
+foreach {p b} [array get sports] {
+    lappend srecords "$p $b"
+}
+set drecords {}
+foreach {p b} [array get dports] {
+    lappend drecords "$p $b"
+}
+
+# Display results and sort them by popularity
+puts "###3### SrcPort BytePassed"
+#foreach r [lsort -increasing -integer -index 0 $srecords] {
+foreach r [lsort -decreasing -integer -index 1 $srecords] {
+    set p [lindex $r 0]
+    set b [lindex $r 1]
+    puts [format "%4d %10d" $p $b]
+}
+puts "###4### DstPort BytePassed"
+#foreach r [lsort -increasing -integer -index 0 $drecords] {
+foreach r [lsort -decreasing -integer -index 1 $drecords] {
+    set p [lindex $r 0]
+    set b [lindex $r 1]
+    puts [format "%4d %10d" $p $b]
 }
 
 # End of file
