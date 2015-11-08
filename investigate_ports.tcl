@@ -82,23 +82,39 @@ while {[gets stdin line] >= 0} {
     if { $targetip != "" } {
 	if { $sip == $targetip } {
 	    if { $sport < 1024 } {
-		incr sports($sport) $bytespassed
+		if {[info exists sports($sport)]} {
+		    incr sports($sport) $bytespassed
+		} else {
+		    set sports($sport) $bytespassed
+		}
 	    }
 	}
 	if { $dip == $targetip } {
 	    if { $dport < 1024 } {
-		incr dports($dport) $bytespassed
+		if {[info exists dports($dport)]} {
+		    incr dports($dport) $bytespassed
+		} else {
+		    set dports($dport) $bytespassed
+		}
 	    }
 	}
     } elseif { $targetnetc != "" } {
 	if { [string match $targetnetc* $sip ] } {
 	    if { $sport < 1024 } {
-		incr sports($sport) $bytespassed
+		if {[info exists sports($sport)]} {
+		    incr sports($sport) $bytespassed
+		} else {
+		    set sports($sport) $bytespassed
+		}
 	    }
 	}
 	if { [string match $targetnetc* $dip ] } {
 	    if { $dport < 1024 } {
-		incr dports($dport) $bytespassed
+		if {[info exists dports($dport)]} {
+		    incr dports($dport) $bytespassed
+		} else {
+		    set dports($dport) $bytespassed
+		}
 	    }
 	}
     }
