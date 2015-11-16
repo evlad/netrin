@@ -27,7 +27,6 @@ proc NFSampler {tj tm value {nbuflen 10}} {
 	}
     }
 
-    set nlist [llength $vlist]
     set olist {}
 
     # Special signal to end of work
@@ -35,11 +34,13 @@ proc NFSampler {tj tm value {nbuflen 10}} {
 	#
 	# Special case to flush buffer
 	#
-	for {set i 0} { $i < $nlist } {incr i} {
+	for {set i 0} { $i < $nbuflen } {incr i} {
 	    lappend olist "[expr $tbegin + $i] [lindex $vlist $i]"
 	}
 	unset vlist
     } else {
+	set nlist [llength $vlist]
+
 	#
 	# Normal case to add values and sometimes flush head of the buffer
 	#
@@ -103,6 +104,39 @@ proc NFSampler {tj tm value {nbuflen 10}} {
 	    for {set i 0} {$i < [expr $tm - $tbegin + $tj] && $i < $nlist} {incr i} {
 		lset vlist $i [expr [lindex $vlist $i] + $valuepercell]
 	    }
+	} elseif { $tj > [expr $tbegin + $nlist - 1]} {
+	    #       tbegin           tbegin+nlist-1
+	    #            |___________|
+	    #                            ^-------^
+	    #                            tj      tj+tm-1
+
+	    #puts "4: tbegin=$tbegin nlist=$nlist  tj=$tj tm=$tm"
+
+	    # Output stored values
+	    for {set i 0} {$i < $nlist} {incr i} {
+		lappend olist "[expr $tbegin + $i] [lindex $vlist $i]"
+	    }
+
+	    # Output zeros
+	    for {set i 0} {$i < [expr $tj - $tbegin - $nlist + 1]} {incr i} {
+		lappend olist "[expr $tbegin + $nlist - 1 + $i] 0"
+	    }
+
+	    # Replace the whole list of stored values
+	    set vlist {}
+
+	    # Initialize by value per cell
+	    for {set i 0} {$i < $tm && $i < $nlist} {incr i} {
+		lappend vlist $i $valuepercell
+	    }
+
+	    # Fill by zeros the tail
+	    for {} {$i < $nlist} {incr i} {
+		lappend vlist 0
+	    }
+
+	    # Set new start time
+	    set tbegin $tj
 	}
     }
 

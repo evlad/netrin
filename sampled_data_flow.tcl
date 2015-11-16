@@ -43,6 +43,10 @@ set maxsteps {}
 set sflowprev {}
 set starttime {}
 
+# Reset buffer
+NFSampler {} 0 0 600
+
+
 # For all input lines
 while {[gets stdin line] >= 0} {
     # Split each line into fields by spaces
@@ -86,37 +90,35 @@ while {[gets stdin line] >= 0} {
     }
     if {$durat == 0} {
 	# This timestamp only
-	NFSampler $sflow $durat $flowbytes 20
-	#set _puts "$sflow $eflow $flowbytes"
+	set reslist [NFSampler $sflow $durat $flowbytes]
+	#puts "A $sflow $eflow $flowbytes"
     } else {
 	set flowbps [expr $flowbytes / $durat]
 	if {$flowbps >= 1} {
 	    # Add
 	    set reslist [NFSampler $sflow $durat $flowbytes]
-	    foreach o $reslist {
-		if { $starttime == {} } {
-		    set starttime [lindex $o 0]
-		    puts "# start date&time: $datetime"
-		    puts "# start unix time: $starttime"
-		    puts "# sampling rate: $srate"
-		    puts "# records count: $maxreccount"
-		}
-		puts "[expr [lindex $o 0] - $starttime] [lindex $o 1]"
-	    }
-	    #set _puts "$sflow $eflow $flowbps"
+	    #puts "B $sflow $eflow $flowbps"
 	}
+    }
+
+    foreach o $reslist {
+	if { $starttime == {} } {
+	    set starttime [lindex $o 0]
+	    puts "# start date&time: $datetime"
+	    puts "# start unix time: $starttime"
+	    puts "# sampling rate: $srate"
+	    puts "# requested records: $maxreccount"
+	}
+	puts "[expr [lindex $o 0] - $starttime] [lindex $o 1]"
     }
 
     #puts "reccount=$reccount"
     incr reccount
-    if { $reccount >= $maxreccount} {
-	#puts "start: $startdatetime"
-	#puts "finish: $datetime"
-	#puts "number of records = $maxreccount"
-	#puts "max step = $maxstep"
-	#puts "steps: [lsort -integer $maxsteps]"
-	exit 0
+    if { $reccount >= $maxreccount && $maxreccount >= 0 } {
+	break
     }
 }
+
+puts "# records number: $reccount"
 
 # End of file
