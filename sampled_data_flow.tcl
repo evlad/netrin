@@ -26,7 +26,7 @@ if { [ string is integer $srate ] } {
     set srate 1
 }
 
-puts "###1### srate=$srate"
+#puts "###1### srate=$srate"
 
 ### The second argument is a maximum records count (1000 by default; negative is infinity)
 set maxreccount [lindex $argv 1]
@@ -34,13 +34,10 @@ if { ! [ string is integer $maxreccount ] || $maxreccount == "" } {
     set maxreccount 10000
 }
 
-puts "###2### maxreccount=$maxreccount"
+#puts "###2### maxreccount=$maxreccount"
 
 
 set reccount 0
-set maxstep 0
-set maxsteps {}
-set sflowprev {}
 set starttime {}
 
 # Reset buffer
@@ -72,43 +69,39 @@ while {[gets stdin line] >= 0} {
     }
 
     set sflow [clock scan $datetime]
+
+    # Skip if start time of the flow is earlier than start time of the
+    # time series
+    if { $starttime == {} } {
+	set starttime $sflow
+	puts "# start date&time: $datetime"
+	puts "# start unix time: $starttime"
+	puts "# sampling rate: $srate"
+	puts "# requested records: $maxreccount"
+    }
+
+    if {$starttime > $sflow} {
+	#puts "#Skip $starttime > $sflow"
+	continue
+    }
+
     set eflow [expr $sflow + $durat]
     set flowbytes [lindex $fields 8]
 
-    if {$sflowprev != {}} {
-	set sstep [expr $sflow - $sflowprev]
-    } else {
-	set sstep 0
-	set startdatetime $datetime
-    }
-    set sflowprev $sflow
-    if {$sstep > $maxstep} {
-	set maxstep $sstep
-    }
-    if {[lsearch -exact $maxsteps $sstep] == -1} {
-	lappend maxsteps $sstep
-    }
+    #puts "#NFSampler $sflow $eflow $flowbytes"
     if {$durat == 0} {
 	# This timestamp only
 	set reslist [NFSampler $sflow $durat $flowbytes]
-	#puts "A $sflow $eflow $flowbytes"
     } else {
 	set flowbps [expr $flowbytes / $durat]
 	if {$flowbps >= 1} {
 	    # Add
 	    set reslist [NFSampler $sflow $durat $flowbytes]
-	    #puts "B $sflow $eflow $flowbps"
 	}
     }
 
     foreach o $reslist {
-	if { $starttime == {} } {
-	    set starttime [lindex $o 0]
-	    puts "# start date&time: $datetime"
-	    puts "# start unix time: $starttime"
-	    puts "# sampling rate: $srate"
-	    puts "# requested records: $maxreccount"
-	}
+	#puts ">> $o"
 	puts "[expr [lindex $o 0] - $starttime] [lindex $o 1]"
     }
 
@@ -117,6 +110,13 @@ while {[gets stdin line] >= 0} {
     if { $reccount >= $maxreccount && $maxreccount >= 0 } {
 	break
     }
+}
+
+set reslist [NFSampler {} 0 0]
+#puts "C flush"
+foreach o $reslist {
+    #puts ">> $o"
+    puts "[expr [lindex $o 0] - $starttime] [lindex $o 1]"
 }
 
 puts "# records number: $reccount"

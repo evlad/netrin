@@ -63,6 +63,7 @@ proc NFSampler {tj tm value {nbuflen 10}} {
 	    for {set i 0} {$i < $tm} {incr i} {
 		set k [expr $tj - $tbegin + $i]
 		lset vlist $k [expr [lindex $vlist $k] + $valuepercell]
+		#puts "vlist($k)=[lindex $vlist $k]"
 	    }
 
 	} elseif { $tbegin <= $tj && $tj <= [expr $tbegin + $nlist - 1] \
@@ -86,6 +87,7 @@ proc NFSampler {tj tm value {nbuflen 10}} {
 	    # Add value per cell
 	    for {set i 0} {$i < $tm && $i < $nlist} {incr i} {
 		lset vlist $i [expr [lindex $vlist $i] + $valuepercell]
+		#puts "vlist($i)=[lindex $vlist $i]"
 	    }
 
 	    # Set new start time
@@ -103,6 +105,7 @@ proc NFSampler {tj tm value {nbuflen 10}} {
 	    # Add value per cell
 	    for {set i 0} {$i < [expr $tm - $tbegin + $tj] && $i < $nlist} {incr i} {
 		lset vlist $i [expr [lindex $vlist $i] + $valuepercell]
+		#puts "vlist($i)=[lindex $vlist $i]"
 	    }
 	} elseif { $tj > [expr $tbegin + $nlist - 1]} {
 	    #       tbegin           tbegin+nlist-1
@@ -118,7 +121,7 @@ proc NFSampler {tj tm value {nbuflen 10}} {
 	    }
 
 	    # Output zeros
-	    for {set i 0} {$i < [expr $tj - $tbegin - $nlist + 1]} {incr i} {
+	    for {set i 1} {$i < [expr $tj - $tbegin - $nlist + 1]} {incr i} {
 		lappend olist "[expr $tbegin + $nlist - 1 + $i] 0"
 	    }
 
@@ -127,7 +130,8 @@ proc NFSampler {tj tm value {nbuflen 10}} {
 
 	    # Initialize by value per cell
 	    for {set i 0} {$i < $tm && $i < $nlist} {incr i} {
-		lappend vlist $i $valuepercell
+		lappend vlist $valuepercell
+		#puts "vlist($i)=[lindex $vlist $i]"
 	    }
 
 	    # Fill by zeros the tail
